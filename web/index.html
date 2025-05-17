@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Document</title>
+</head>
+<style>
+
+    html {
+        height: 100%;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+    }
+
+    .root {
+        /*display: flex;*/
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: auto;
+        min-height: 100%;
+    }
+
+    .loding {
+        visibility: visible;
+    }
+
+    /* HTML: <div class="loader"></div> */
+    .loader {
+        height: 80px;
+        aspect-ratio: 1;
+        padding: 10px;
+        border-radius: 50%;
+        box-sizing: border-box;
+        position: relative;
+        mask: conic-gradient(#000 0 0) content-box exclude, conic-gradient(#000 0 0);
+        filter: blur(12px);
+    }
+
+    .loader:before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: conic-gradient(#0000 35%, #C02942, #0000 65%);
+        animation: l1 1.5s linear infinite;
+    }
+
+    @keyframes l1 {
+        to {
+            rotate: 1turn
+        }
+    }
+
+
+    .hidden {
+        visibility: hidden;
+        position: absolute;
+    }
+
+    .images {
+        border: 1px solid black;
+        flex-wrap: wrap;
+        visibility: hidden;
+        min-height: 100%;
+        /*position: absolute;*/
+    }
+
+    .images.show {
+        visibility: visible;
+    }
+
+    .image {
+        width: fit-content;
+        min-width: 200px;
+        height: fit-content;
+        min-height: 200px;
+        display: flex;
+        flex: 0 1 auto;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+<body>
+<div class="root">
+
+    <div class="images">
+
+        <!--        vue  渲染 也是同样的dom 元素-->
+        <!--
+            <div class="img" >
+                   <span class="loding loader "></span>
+                  <div class="images"></div>
+            </div>
+        -->
+
+    </div>
+
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+
+
+    const request = axios || null;
+
+    if (!request) throw onerror("axios 不存在");
+
+
+    // 获取Dom元素
+    const dom_images = document.querySelector(".images");  // 承载的盒子
+
+
+    //  服务器地址  图片的服务器地址  使用是haipi 框架 本身 就是demo  本地刚好有这个框架的示栗
+    const server_url = "http://localhost:3000"
+
+    //  请求图片地址
+    function getUrlParameter(call, pages = 0) {
+        // 图片路径
+        const request_image_url = `/images?pages=${pages}`
+        // 完整 路径
+        const url = `${server_url}${request_image_url}`;
+
+        request.get(url).then(res => {
+            call && call(res)
+        }, err => console.error(err))
+        return null
+    }
+
+
+    function createFnc(pages = 3) {
+        // 创建image
+        function createImageFnc(url, span) {
+            const img = new Image();
+            img.className = "img";
+            img.onload = function () {
+                console.log("图片加载成功...")
+                // 无论是前端框架还是原生
+                // 移除loding...
+                span.classList.add("hidden");
+            }
+            img.onerror = function (err) {
+                console.log(err);
+            };
+            // 图片的src
+            img.src = url;
+            return img;
+        }
+
+        getUrlParameter(function (res) {
+            if (res.data && res.data.length > 0) {
+                const images = res.data;
+
+                images.forEach((url) => {
+                    //    请求数据是几个 就创建多少个元素
+                    //      创建元素
+                    const div = document.createElement("div");
+                    const span = document.createElement("span");
+                    const new_url = server_url + `/${url}`;
+                    //  创建图片元素
+                    const dom_img = createImageFnc(new_url, span);
+                    // 添加元素
+                    div.classList.add("image");
+                    //  添加它的子元素
+                    span.className = "loding loader";
+                    div.appendChild(span);
+                    div.appendChild(dom_img);
+                    dom_images.appendChild(div);
+                    //    图片展示
+                    dom_images.classList.add("show");
+                })
+
+
+            }
+        }, pages)
+    }
+
+    createFnc()
+
+    //     ---------------------- 滚动加载也是一样的  删掉注释---
+    //
+    // const root = document.querySelector(".root");
+    //
+    // let pages = 4;
+    //
+    // root.addEventListener("scroll", (e) => {
+    //     // 获取当前滚动的位置
+    //     const currentScroll = root.scrollTop;
+    //     // 获取容器的总高度
+    //     const totalHeight = root.scrollHeight;
+    //     // 获取容器的视口高度
+    //     const viewportHeight = root.clientHeight;
+    //     //      js  有精度问题  写一个误差范围 0.5 - 1.0
+    //     const max_min = 1;
+    //     // 计算出来的高度
+    //     const computedHeight = (viewportHeight + currentScroll) > totalHeight - max_min;
+    //
+    //     // console.log("当前滚动的位置 ",currentScroll ,"获取容器的总高度" , totalHeight ,
+    //     //     "获取容器的视口高度" , viewportHeight, viewportHeight + currentScroll);
+    //     // console.log("当前滚动的位置 ",parseInt(currentScroll) ,"获取容器的总高度" , parseInt(totalHeight) ,
+    //     //     "获取容器的视口高度" , parseInt(viewportHeight),parseInt(viewportHeight + currentScroll) );
+    //
+    //     if (computedHeight) {
+    //         console.log("底部 ", computedHeight)
+    //         //   重新请求
+    //         createFnc(pages++)
+    //     } else {
+    //         return  null
+    //     }
+    // })
+
+
+</script>
+</html>
