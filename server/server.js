@@ -61,6 +61,27 @@ const main = async () => {
     }
   });
 
+
+
+  var   delay_times =  1
+  //  新增个中间件  模拟网络请求缓慢
+  server.ext("onPreResponse" , function (request, h) {
+    if (request.path.startsWith('/images/')) {
+      delay_times += 1 ;
+      delay_times = delay_times > 3 ? 1 : delay_times;
+      const delay =delay_times  *  1000; // 延迟3秒
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(h.continue);
+        }, delay);
+      });
+    }
+    return h.continue;
+  })
+
+
+
+
   server.route({
     method: "GET",
     path: "/",
