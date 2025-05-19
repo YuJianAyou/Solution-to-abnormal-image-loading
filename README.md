@@ -20,3 +20,6 @@ index.html  vscode   有个server插件运行下
 
 无论是   loading 占位  还是默认 图片占位  都是同理  
 
+
+
+后续新增了 小程序图片加载 文件 ->mini... copy  运行下
