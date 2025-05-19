@@ -1,1 +1,156 @@
+小程序实现
 
+所有示例图  均放在图片文件夹中
+
+
+
+<!--index.wxml-->
+<navigation-bar title="Weixin" back="{{false}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="scrollarea" scroll-y type="list" bindscrolltolower= "scrollFnc">
+  <block>
+    <view  class="flex containers">
+    <block wx:for="{{imagesData}}" wx:for-item="img_src" wx:key="key">
+    <view class="flex">
+// 图片
+      <image src="http://localhost:3000/{{img_src}}" bindload="img_onloding"  data-idx="{{index}}"></image>
+//loding
+     <view class="loding">
+      <view class="loader "  wx:if="{{lodingData[index]}}"></view>
+     </view>
+    </view>
+    </block>
+    </view>
+  </block>
+</scroll-view>
+
+
+
+// index.js
+Page({
+
+  data: {
+    pages: 4,// 几条数据
+    Ser_url: "http://localhost:3000",
+    imagesData: [],
+    lodingData: []
+  },
+  onLoad() {
+    this.createFnc(this.data.pages)
+  },
+
+  requestIimg(pages) {
+    const that = this;
+    //  请求 
+    wx.request({
+      url: this.data.Ser_url + '/images?pages=' + pages,
+      success(res) {
+        that.changeData(res)
+      }
+    })
+
+    console.log(`请求`)
+  },
+  // 更改数据
+  changeData(res) {
+    //  更改数据的时候 
+    /**
+写到这里的时候 卡住了  有点不优雅  但实现了   因为 使用的wx-for 循环 无法动态创建 dom 节点  写的话 不是很优雅.等后面想到了 在更改此处代码
+*/
+    console.log(res)
+  //  是否是第一次添加
+    const imagedata = res.data.length ? res.data : this.data.imagesData;
+    const lodingdata = this.data.lodingData.length ? this.data.lodingData : res.data;
+    if (this.data.lodingData.length) {
+      lodingdata.push(res.data[res.data.length - 1])
+      this.setData({
+        imagesData: imagedata,
+        lodingData: lodingdata,
+      })
+    } else {
+      this.setData({
+        imagesData: imagedata,
+        lodingData: lodingdata,
+      })
+    }
+
+  },
+
+  createFnc(pages = 3) {
+    // 请求数据 
+    this.requestIimg(pages)
+  },
+
+  img_onloding(e) {
+    console.log("加载成功", this)
+    const idx = Number(e.target.dataset.idx)
+    console.log(this.data.lodingData[idx] = 0, `idx`, idx)
+    this.setData({
+      [`lodingData[${idx}]`]: 0
+    })
+  },
+
+  scrollFnc() {
+    console.log("滚动到底了")
+    this.setData({
+      pages: this.data.pages + 1
+    })
+
+    console.log(this.data.pages);
+
+
+    this.createFnc(this.data.pages)
+  }
+})
+
+
+
+/**css  可以忽略  你的草原你的马  你想怎写就怎写**/
+/**index.wxss**/
+page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.scrollarea {
+  flex: 1;
+  overflow-y: hidden;
+}
+
+
+.loader {
+  width: 120px;
+  height: 22px;
+  border-radius: 20px;
+  color: #514b82;
+  border: 2px solid;
+  position: relative;
+}
+.loader::before {
+  content: "";
+  position: absolute;
+  margin: 2px;
+  inset: 0 100% 0 0;
+  border-radius: inherit;
+  background: currentColor;
+  animation: l6 2s infinite;
+}
+@keyframes l6 {
+    100% {inset:0}
+}
+.containers {
+  position: relative;
+  min-height: 0;
+}
+.loding {
+  position: absolute;
+}
+
+.flex {
+  display: flex; 
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  flex-wrap: wrap;
+  gap: 4rpx;
+}
